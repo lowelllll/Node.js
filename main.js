@@ -5,7 +5,16 @@ var qs = require('querystring');
 var template = require('./lib/template.js');
 var path = require('path');
 var sanitizeHtml = require('sanitize-html');
+var mysql = require('mysql');
 
+var db = mysql.createConnection({ // db connect
+    host:'localhost',
+    user:'root',
+    password:'',
+    database:'opentutorials'
+});
+
+db.connect(); // db 접속
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
@@ -13,52 +22,72 @@ var app = http.createServer(function(request,response){
     var pathname = url.parse(_url,true).pathname;
 
     if(pathname === '/') {
-        if(queryData.id === undefined){
-            // home 
-            fs.readdir('./data', function(err,filelist){
+        if(queryData.id === undefined){ // home
+            db.query(`SELECT * FROM topic`, function(error,result){
                 var title = 'Welcome';
-                // var list = templateList(filelist);
-                var list = template.list(filelist);
+                var list = template.list(result);
                 var description = 'Hello, Node.js';
-
-                // var template = templateHTML(title,list,`<h2>${title}</h2>${description}`,
-                // `<a href="/create">create</a>`
-                // ) 
-
+                
                 var html = template.html(title,list,`<h2>${title}</h2>${description}`,
                 `<a href="/create">create</a>`
                 )   
         
                 response.writeHead(200);
-                response.end(html);  // 사용자가 접속한 url에 따라 파일을 읽어와줌.
-                                
+                response.end(html);
             });
         }else {
             // detail 
-            fs.readdir('./data', function(err,filelist){
-                var filterdId = path.parse(queryData.id).base; // 보안
-                fs.readFile(`data/${filterdId}`,'utf-8',function (err,description) {
-                    var title = queryData.id;
+            // fs.readdir('./data', function(err,filelist){
+            //     var filterdId = path.parse(queryData.id).base; // 보안
+            //     fs.readFile(`data/${filterdId}`,'utf-8',function (err,description) {
+            //         var title = queryData.id;
                     
-                    // XSS 보안
-                    var sanitizeTitle = sanitizeHtml(title);
-                    var sanitizeDescription = sanitizeHtml(description);
+            //         // XSS 보안
+            //         var sanitizeTitle = sanitizeHtml(title);
+            //         var sanitizeDescription = sanitizeHtml(description);
 
-                    var list = template.list(filelist);
-                    var html = template.html(sanitizeTitle,list,`<h2>${sanitizeTitle}</h2>${sanitizeDescription}`,
-                    `<a href="/create">create</a> 
-                     <a href="/update?id=${sanitizeTitle}">update</a> 
-                    <form action="delete_process" method="post">
-                        <input type="hidden" name="id" value="${sanitizeTitle}">
-                        <input type="submit" value="delete">
-                    </form>
-                     `
-                    );
+            //         var list = template.list(filelist);
+            //         var html = template.html(sanitizeTitle,list,`<h2>${sanitizeTitle}</h2>${sanitizeDescription}`,
+            //         `<a href="/create">create</a> 
+            //          <a href="/update?id=${sanitizeTitle}">update</a> 
+            //         <form action="delete_process" method="post">
+            //             <input type="hidden" name="id" value="${sanitizeTitle}">
+            //             <input type="submit" value="delete">
+            //         </form>
+            //          `
+            //         );
 
-                    response.writeHead(200);
-                    response.end(html);  // 사용자가 접속한 url에 따라 파일을 읽어와줌.
-                });    
+            //         response.writeHead(200);
+            //         response.end(html);  // 사용자가 접속한 url에 따라 파일을 읽어와줌.
+            //     });    
+            // });
+            db.query(`SELECT * FROM topic`, function(error,result){
+                if(error){
+                    throw error;
+                }
+               db.query(`SELECT * FROM topic WHERE id =?`,[queryData.id],function (error2,topic){
+                if(error2){
+                    throw error2;
+                }
+                var title = topic[0].title;
+                var list = template.list(result);
+                var description = topic[0].description;
+                
+                var html = template.html(title,list,`<h2>${title}</h2>${description}`,
+                `<a href="/create">create</a> 
+                <a href="/update?id=${queryData.id}">update</a> 
+                <form action="delete_process" method="post">
+                <input type="hidden" name="id" value="${queryData.id}">
+                <input type="submit" value="delete">
+        </form>
+    `
+                )   
+                
+                response.writeHead(200);
+                response.end(html);
+               })
             });
+
         }
     }else if(pathname === '/create'){
         // create 
