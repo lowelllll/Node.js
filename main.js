@@ -91,27 +91,28 @@ var app = http.createServer(function(request,response){
         }
     }else if(pathname === '/create'){
         // create 
-
-        fs.readdir('./data', function(err,filelist){
-            var title = 'WEB - create';
-            var list = template.list(filelist);
-
-            var html = template.html(title,list,`
+        db.query(`SELECT * FROM topic`, function(error,result){
+            var title = 'CREATE';
+            var list = template.list(result);            
+            var html = template.html(title,list,
+            `        
                 <form action="/create_process" method="post">
-                    <p><input type="text" name="title" placeholder="title"></p>
-                    <p>
-                        <textarea name="description" placeholder="description"></textarea>
-                    </p>
-                    <p>
-                        <input type="submit">
-                    </p>
-                </form>
-            `, ``);
+                <p><input type="text" name="title" placeholder="title"></p>
+                <p>
+                    <textarea name="description" placeholder="description"></textarea>
+                </p>
+                <p>
+                    <input type="submit">
+                </p>
+            </form>
+            `,
+            ''
+            )   
     
             response.writeHead(200);
-            response.end(html);  // 사용자가 접속한 url에 따라 파일을 읽어와줌.
-                            
+            response.end(html);
         });
+        
     } else if(pathname === '/create_process'){
 
         var body = '';
@@ -127,13 +128,17 @@ var app = http.createServer(function(request,response){
         // 정보 수신이 끝난 후 호출됨.
         request.on('end',function(){
             var post = qs.parse(body); // post로 받은 데이터를 객체화.
-            var title = post.title;
-            var description = post.description;
             
-            // file create
-            fs.writeFile(`data/${title}`,description, function(err){
-                response.writeHead(302,{Location:`/?id=${title}`});
-                response.end();     
+            db.query(`INSERT INTO topic (title,description,created,author_id)
+                VALUES (?, ?, NOW(), ?)`,
+                [post.title,post.description,1],
+                function(error,result){
+                    if(error) {
+                        throw error;
+                    }
+                    response.writeHead(302,{Location:`/?id=${result.insertId}`});
+                    response.end();
+                    
             });
         });
     }else if(pathname ==='/update'){
