@@ -30,6 +30,8 @@ var app = http.createServer(function(request,response){
         topic.delete_process(request,response);
     }else if(pathname === '/authors'){
         auth.home(request,response);
+    }else if(pathname === '/author/create_process'){
+        auth.create_process(request,response);
     }else {
         response.writeHead(404);
         response.end("Not found");
