@@ -32,6 +32,10 @@ var app = http.createServer(function(request,response){
         auth.home(request,response);
     }else if(pathname === '/author/create_process'){
         auth.create_process(request,response);
+    }else if(pathname === '/author/update'){
+        auth.update(request,response);
+    }else if(pathname === '/author/update_process'){
+        auth.update_process(request,response);
     }else {
         response.writeHead(404);
         response.end("Not found");
