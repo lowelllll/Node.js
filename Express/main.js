@@ -55,26 +55,33 @@ app.get('/',function (request,response){
 });
 
 // url parameter를 받음.
-app.get('/page/:pageId',function(request,response){
+app.get('/page/:pageId',function(request,response,next){
   var pageId = request.params['pageId'];
   var filteredId = path.parse(pageId).base;
   fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
-    var title = pageId;
-    var sanitizedTitle = sanitizeHtml(title);
-    var sanitizedDescription = sanitizeHtml(description, {
-      allowedTags:['h1']
-    });
-    var list = template.list(request.list);
-    var html = template.HTML(sanitizedTitle, list,
-      `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
-      ` <a href="/create">create</a>
-        <a href="/update/${sanitizedTitle}">update</a>
-        <form action="/delete" method="post">
-          <input type="hidden" name="id" value="${sanitizedTitle}">
-          <input type="submit" value="delete">
-        </form>`
-    );
-    response.send(html);
+    if(!err){
+      var title = pageId;
+      var sanitizedTitle = sanitizeHtml(title);
+      var sanitizedDescription = sanitizeHtml(description, {
+        allowedTags:['h1']
+      });
+      var list = template.list(request.list);
+      var html = template.HTML(sanitizedTitle, list,
+        `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
+        ` <a href="/create">create</a>
+          <a href="/update/${sanitizedTitle}">update</a>
+          <form action="/delete" method="post">
+            <input type="hidden" name="id" value="${sanitizedTitle}">
+            <input type="submit" value="delete">
+          </form>`
+      );
+      response.send(html);
+    }else{
+      next(err);
+      // 해당 파일이 없을 경우 맨 밑의 error 미들웨어로 넘어감
+      // next(),next('route')외 미들웨어는 에러 미들웨어로 처리함. 
+    }
+    
   });
 })
 
@@ -167,5 +174,15 @@ app.post('/delete',function(request,response){
   })
 })
 
+// 404
+app.use(function(req,res,next){
+  res.status(404).send(`Sorry can't not found page`);
+});
+
+// error를 핸들링하는 미들웨어
+app.use(function(err,req,res,next){
+  console.error(err.status);
+  res.status(500).send(`Someting broke!`);
+});
 
 app.listen(3000,()=> console.log(`Example app listening on port 3000!`))
