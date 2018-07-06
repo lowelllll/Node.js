@@ -13,6 +13,11 @@ var compression = require('compression');
 */
 
 
+// serving static files
+// 정적인 파일 서비스하기.
+// public 폴더 안에서 static 파일을 찾겠다.
+app.use(express.static('public'));
+
 // bodyparser middleware 사용
 // 사용자가 요청할 때(main.js) 마다 미들웨어가 실행됨. 
 // 사용자가 보낸 post 데이터를 내부적으로 분석함.
@@ -31,6 +36,8 @@ app.get('*',function(request,response,next){
   });
 })
 
+
+
 // get 메소드를 받는 함수
 // 두번째 인자인 콜백은 미들웨어.
 app.get('/',function (request,response){ 
@@ -38,7 +45,10 @@ app.get('/',function (request,response){
   var description = 'Hello, Node.js';
   var list = template.list(request.list);
   var html = template.HTML(title, list,
-    `<h2>${title}</h2>${description}`,
+    `<h2>${title}</h2>${description}
+    <img src="/images/hello.jpg" style="width:300px; display:block;"> 
+    `
+    ,
     `<a href="/create">create</a>`
   );
   response.send(html);
