@@ -5,6 +5,8 @@ var bodyParser = require('body-parser');
 var compression = require('compression');
 var topicRouter = require('./routes/topic'); // 토픽 라우터를 가져옴
 var indexRouter = require('./routes/index'); // 인덱스 라우터를 가져옴
+var helmet = require('helmet');
+app.use(helmet()); // 보안
 
 /*
   익스프레스는 모든 것이 미들웨어라고 할 수 있음.
@@ -34,7 +36,7 @@ app.get('*',function(request,response,next){
   });
 })
 
-app.use('/',indexRouter);
+app.use('/',indexRouter); 
 app.use('/topic',topicRouter); // '/topic' 토픽 라우터 미들웨어를 적용.
 
 // 404
