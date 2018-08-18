@@ -20,17 +20,18 @@ function authIsOwner(request,response){ // 로그인이 되어있는지 확인(�
   return isOwner
 }
 
+function authStatus(request,response){
+  var authStatusUI = '<a href=/login>login</a>';
+  if(authIsOwner(request,response)){ // login 되어있을 경우
+    authStatusUI = '<a href=/logout>logout</a>'; // logout 링크 표시
+  }
+  return authStatusUI
+}
 
 var app = http.createServer(function(request,response){
     var _url = request.url;
     var queryData = url.parse(_url, true).query;
     var pathname = url.parse(_url, true).pathname;
-    var isOwner = authIsOwner(request,response);
-    var authStatusUI = '<a href=/login>login</a>'
-    if(isOwner){
-      authStatusUI = '<a href=/logout>logout</a>'
-    }
-
     if(pathname === '/'){
       if(queryData.id === undefined){
         fs.readdir('./data', function(error, filelist){
@@ -40,7 +41,7 @@ var app = http.createServer(function(request,response){
           var html = template.HTML(title, list,
             `<h2>${title}</h2>${description}`,
             `<a href="/create">create</a>`,
-            authStatusUI
+            authStatus(request,response)
           );
           response.writeHead(200);
           response.end(html);
@@ -83,7 +84,7 @@ var app = http.createServer(function(request,response){
               <input type="submit">
             </p>
           </form>
-        `, '');
+        `, '', authStatus(request,response));
         response.writeHead(200);
         response.end(html);
       });
@@ -120,7 +121,8 @@ var app = http.createServer(function(request,response){
               </p>
             </form>
             `,
-            `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`
+            `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`,
+            authStatus(request,response)
           );
           response.writeHead(200);
           response.end(html);
@@ -169,7 +171,8 @@ var app = http.createServer(function(request,response){
             <p><input type="submit"></p>
           </form>
           `,
-          `<a href="/create">create</a>`
+          `<a href="/create">create</a>`,
+          authStatus(request,response)
         );
         response.writeHead(200);
         response.end(html);
