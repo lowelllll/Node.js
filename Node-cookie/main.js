@@ -23,7 +23,7 @@ function authIsOwner(request,response){ // 로그인이 되어있는지 확인(�
 function authStatus(request,response){
   var authStatusUI = '<a href=/login>login</a>';
   if(authIsOwner(request,response)){ // login 되어있을 경우
-    authStatusUI = '<a href=/logout>logout</a>'; // logout 링크 표시
+    authStatusUI = '<a href=/logout_process>logout</a>'; // logout 링크 표시
   }
   return authStatusUI
 }
@@ -71,6 +71,9 @@ var app = http.createServer(function(request,response){
         });
       }
     } else if(pathname === '/create'){
+      if(authIsOwner(request,response)=== false){ // 로그인이 되어있지 않은 경우 접근 제어 ACcess Control
+        response.end(`Login required!!`);
+      }
       fs.readdir('./data', function(error, filelist){
         var title = 'WEB - create';
         var list = template.list(filelist);
@@ -89,6 +92,9 @@ var app = http.createServer(function(request,response){
         response.end(html);
       });
     } else if(pathname === '/create_process'){
+      if(authIsOwner(request,response)=== false){
+        response.end(`Login required!!`);
+      }
       var body = '';
       request.on('data', function(data){
           body = body + data;
@@ -103,6 +109,9 @@ var app = http.createServer(function(request,response){
           })
       });
     } else if(pathname === '/update'){
+      if(authIsOwner(request,response)=== false){
+        response.end(`Login required!!`);
+      }
       fs.readdir('./data', function(error, filelist){
         var filteredId = path.parse(queryData.id).base;
         fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
@@ -129,6 +138,9 @@ var app = http.createServer(function(request,response){
         });
       });
     } else if(pathname === '/update_process'){
+      if(authIsOwner(request,response)=== false){
+        response.end(`Login required!!`);
+      }
       var body = '';
       request.on('data', function(data){
           body = body + data;
@@ -146,6 +158,9 @@ var app = http.createServer(function(request,response){
           });
       });
     } else if(pathname === '/delete_process'){
+      if(authIsOwner(request,response)=== false){
+        response.end(`Login required!!`);
+      }
       var body = '';
       request.on('data', function(data){
           body = body + data;
@@ -197,6 +212,14 @@ var app = http.createServer(function(request,response){
             response.end('Who?');
           }
         });
+    } else if(pathname === '/logout_process') {
+      response.writeHead(302, {
+        'Set-Cookie':[
+          `email=;Max-Age=0`, // 쿠키를 날림
+          `password=;Max-Age=0`,
+          'nickname=;Max-Age=0'
+      ],Location: `/`});
+      response.end();
     }else {
       response.writeHead(404);
       response.end('Not found');
